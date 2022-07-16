@@ -1,14 +1,14 @@
 import Ausleihe from "./ausleihe"
 
 export default class Benutzer {
-    private ausleihen: Ausleihe[] = [];
+    public ausleihen: Ausleihe[] = [];
 
     constructor(
-        private id: string,
-        private name: string,
-        private vorname: string,
-        private email: string,
-        private secret: string) { }
+        public id: string,
+        public name: string,
+        public vorname: string,
+        public email: string,
+        public secret: string) { }
 
     toString() {
         return `${this.email} [${this.id}]`

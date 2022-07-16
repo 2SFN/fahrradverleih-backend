@@ -1,4 +1,5 @@
 export default class CurrencyT {
+
     /**
          * ISO 4217 definiert Kürzel und numerische Codes für verschiedene
          * internationale Währungen.
@@ -8,10 +9,17 @@ export default class CurrencyT {
          * @see https://en.wikipedia.org/wiki/ISO_4217
          */
     constructor(
-        private betrag: number = 0,
-        private iso4217: string = "EUR") { }
+        public betrag: number = 0,
+        public iso4217: string = "EUR") { }
 
     toString() {
         return `${this.iso4217} ${this.betrag}`;
+    }
+
+    asObject() {
+        return {
+            betrag: this.betrag,
+            iso4217: this.iso4217
+        };
     }
 }

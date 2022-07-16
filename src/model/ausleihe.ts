@@ -4,13 +4,20 @@ import TarifT from "./tarif";
 
 export default class Ausleihe {
     constructor(
-        private fahrrad: Fahrrad,
-        private benutzer: Benutzer,
-        private von: Date,
-        private bis: Date,
-        private tarif: TarifT) { }
+        public id: string = Ausleihe.genDefaultId(),
+        public fahrrad: Fahrrad,
+        public benutzer: Benutzer,
+        public von: Date,
+        public bis: Date,
+        public tarif: TarifT) { }
 
     toString() {
         return `Ausleihe von Benutzer ${this.benutzer.toString()}`;
+    }
+
+    private static genDefaultId() {
+        // Für Testzwecke ausreichend:
+        // Generiert eine ID basierend auf der aktuellen Microtime
+        return `A-${new Date().getTime()}`;
     }
 }

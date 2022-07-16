@@ -2,9 +2,36 @@ import Fahrrad from "./fahrrad";
 import GeopositionT from "./geoposition";
 
 export default class Station {
-    private fahrraeder: Fahrrad[] = [];
+    public fahrraeder: Fahrrad[] = [];
+
     constructor(
-        private id: string = "",
-        private bezeichnung: string = "",
-        private position: GeopositionT = new GeopositionT()) { }
+        public id: string = "",
+        public bezeichnung: string = "",
+        public position: GeopositionT = new GeopositionT()) { }
+
+    /**
+     * Zählt die Anzahl der verfügbaren (anh. d. Bez.) Fahrräder pro Typ.
+     * 
+     * @returns Objekt mit Key-Value Zuordnung (`typ: anzahl`).
+     */
+    raederProTyp(): object {
+        const map: Map<string, number> = new Map();
+
+        for (const r of this.fahrraeder) {
+            const key = r.typ.bezeichnung;
+            map.set(key, (map.get(key) || 0) + 1)
+        }
+
+        return Object.fromEntries(map);
+    }
+
+    asObject() {
+        return {
+            id: this.id,
+            bezeichnung: this.bezeichnung,
+            position: this.position.asObject(),
+            verfuegbar: this.fahrraeder.length
+        };
+    }
+
 }

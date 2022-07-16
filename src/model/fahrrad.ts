@@ -5,12 +5,20 @@ import TarifT from "./tarif";
 
 export default class Fahrrad {
     constructor(
-        private id: string,
-        private position: GeopositionT,
-        private typ: FahrradTyp,
-        private station: Station | null) { }
+        public id: string,
+        public position: GeopositionT,
+        public typ: FahrradTyp,
+        public station: Station | null) { }
 
     toString() {
         return `${this.typ.toString()} @ ${this.position.toString()}`;
+    }
+    
+    asObject() {
+        return {
+            id: this.id,
+            position: this.position.asObject(),
+            typ: this.typ.asObject()
+        }
     }
 }
