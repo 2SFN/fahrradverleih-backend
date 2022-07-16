@@ -15,6 +15,16 @@ export default class Ausleihe {
         return `Ausleihe von Benutzer ${this.benutzer.toString()}`;
     }
 
+    asObject() {
+        return {
+            id: this.id,
+            fahrrad: this.fahrrad.asObject(),
+            tarif: this.tarif,
+            von: this.von,
+            bis: this.bis
+        };
+    }
+
     private static genDefaultId() {
         // Für Testzwecke ausreichend:
         // Generiert eine ID basierend auf der aktuellen Microtime

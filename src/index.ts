@@ -73,12 +73,7 @@ server.get("/benutzer/details", async (req: Request, res: Response) => {
     if(u === null) {
         respond401(res);
     } else {
-        res.status(200).json({
-            id: u.id,
-            name: u.name,
-            vorname: u.vorname,
-            email: u.email
-        });
+        res.status(200).json(u.asObject());
     }
 });
 
@@ -103,4 +98,15 @@ server.get("/stationen/:id/raeder", async (req: Request, res: Response) => {
     const liste = []
     for (const f of station.fahrraeder) liste.push(f.asObject());
     res.status(200).json(liste);
+});
+
+server.get("/benutzer/ausleihen", async (req: Request, res: Response) => {
+    const u = benutzerAuth(req);
+    if(u === null) {
+        respond401(res);
+    } else {
+        const liste = []
+        for (const a of u.ausleihen) liste.push(a.asObject());
+        res.status(200).json(liste);
+    }
 });

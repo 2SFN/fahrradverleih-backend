@@ -13,4 +13,13 @@ export default class Benutzer {
     toString() {
         return `${this.email} [${this.id}]`
     }
+
+    asObject() {
+        return {
+            id: this.id,
+            name: this.name,
+            vorname: this.vorname,
+            email: this.email
+        };
+    }
 }
