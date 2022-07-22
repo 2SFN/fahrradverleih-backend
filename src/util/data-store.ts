@@ -25,7 +25,7 @@ export default class DataStore {
     constructor() {
         this.benutzer.push(new Benutzer("U0001", "Gerle", "Martina", "u1@test.mail", "Test"));
         this.benutzer.push(new Benutzer("U0002", "Neumann", "Frank", "u2@test.mail", "Test"));
-        this.benutzer.push(new Benutzer("U0003", "Muster", "Skylar", "u3@test.mail", "Test"));
+        this.benutzer.push(new Benutzer("U0003", "Regenberg", "Skylar", "u3@test.mail", "Test"));
 
         // Die Geokoordinaten sollten in etwa zu den Straßennamen passen (Monheim am Rhein)
         this.stationen.push(new Station("S0001", "Berghauser Straße", new GeopositionT(51.114696, 6.893327)));
