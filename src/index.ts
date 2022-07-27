@@ -9,13 +9,32 @@ Standardmäßiger Port für den WebServer: 3000
 */
 import express from 'express';
 import { Request, Response } from 'express';
+import cors from 'cors';
+
 import Benutzer from './model/benutzer';
 import Station from './model/station';
 import DataStore from './util/data-store';
+import {CorsOptions} from "cors";
 
 ///////////////  Express & Umgebung  ///////////////
 const server = express();
 server.use(express.json());
+
+// Konfiguration für CORS in der Ionic-Entwicklungsumgebung
+// s. https://ionicframework.com/docs/troubleshooting/cors
+const allowedOrigins = [
+    'capacitor://localhost',
+    'ionic://localhost',
+    'http://localhost',
+    'http://localhost:8080',
+    'http://localhost:8100',
+];
+
+const corsOptions: CorsOptions = {
+    origin: allowedOrigins
+}
+
+server.use(cors(corsOptions));
 
 const {
     PORT = 3000,
