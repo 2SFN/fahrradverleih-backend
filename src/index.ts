@@ -47,7 +47,19 @@ const respond400 = (r: Response) => { r.status(400).json({error: "Falsche Parame
 const respond401 = (r: Response) => { r.status(401).json({error: "Nicht autorisiert."}) }
 
 server.post("/benutzer/auth", async (req: Request, res: Response) => {
-    if(req.body.email === undefined || req.body.secret === undefined) {
+    // Modus A: Token prüfen, keine neue Session erstellen
+    if(req.headers.token !== undefined) {
+        const u = benutzerAuth(req);
+        if(u === null) {
+            respond401(res);
+        } else {
+            res.status(200).json({ok: true, token: req.headers.token});
+        }
+        return;
+    }
+
+    // Modus B: Neue Session
+    if((req.body.email === undefined || req.body.secret === undefined)) {
         respond400(res);
         return;
     }
