@@ -1,4 +1,4 @@
-import express, {Request, Response} from "express";
+import express, {NextFunction, Request, Response} from "express";
 import DataStore from "./util/data-store";
 import Benutzer from "./model/benutzer";
 
@@ -21,6 +21,21 @@ const benutzerAuth = (r: Request): Benutzer | null => {
     return sessions.get(String(r.headers.token)) || null;
 }
 
+// Minimale express-middleware, welche den Benutzer authentifiziert und
+// den Request-Context entsprechend aktualisiert
+interface AuthorizedRequest extends Request {
+    benutzer?: Benutzer;
+}
+
+const authRoute = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
+    const u = benutzerAuth(req);
+    if (u === null) respond401(res);
+    else {
+        req.benutzer = u;
+        next();
+    }
+}
+
 // Standard-Antworten bei Fehlern
 const respond400 = (r: Response) => {
     r.status(400).json({error: "Falsche Parameter."})
@@ -29,23 +44,12 @@ const respond401 = (r: Response) => {
     r.status(401).json({error: "Nicht autorisiert."})
 }
 
-///////////////  API  ///////////////
 const router = express.Router()
 export default router;
 
-router.post("/benutzer/auth", async (req: Request, res: Response) => {
-    // Modus A: Token prüfen, keine neue Session erstellen
-    if (req.headers.token !== undefined) {
-        const u = benutzerAuth(req);
-        if (u === null) {
-            respond401(res);
-        } else {
-            res.status(200).json({ok: true, token: req.headers.token});
-        }
-        return;
-    }
+///////////////  API: /benutzer  ///////////////
 
-    // Modus B: Neue Session
+router.post("/benutzer/login", async (req: Request, res: Response) => {
     if ((req.body.email === undefined || req.body.secret === undefined)) {
         respond400(res);
         return;
@@ -61,20 +65,33 @@ router.post("/benutzer/auth", async (req: Request, res: Response) => {
         // aktueller Microtime und Nutzer-ID erzeugt
         const token = `T-${u.id}-${new Date().getTime()}`;
         sessions.set(token, u);
-        res.status(200).json({
-            ok: true, token: token
-        });
+        res.status(200).json({ok: true, token: token});
     }
 });
 
-router.get("/benutzer/details", async (req: Request, res: Response) => {
-    const u = benutzerAuth(req);
-    if (u === null) {
-        respond401(res);
-    } else {
-        res.status(200).json(u.asObject());
-    }
+router.get("/benutzer/auth", authRoute, async (req: AuthorizedRequest, res: Response) => {
+    res.status(200).json({ok: true});
 });
+
+router.get("/benutzer/details", authRoute, async (req: AuthorizedRequest, res: Response) => {
+    res.status(200).json(req.benutzer?.asObject());
+});
+
+router.post("/benutzer/details", authRoute, async (req: AuthorizedRequest, res: Response) => {
+    if (req.benutzer === undefined) return;
+    if (req.body.vorname) req.benutzer.vorname = req.body.vorname;
+    if (req.body.name) req.benutzer.name = req.body.name;
+    if (req.body.email) req.benutzer.email = req.body.email;
+    res.status(200).json({"ok": true});
+});
+
+router.get("/benutzer/ausleihen", authRoute, async (req: AuthorizedRequest, res: Response) => {
+    const liste = []
+    for (const a of req.benutzer?.ausleihen || []) liste.push(a.asObject());
+    res.status(200).json(liste);
+});
+
+///////////////  API: /stationen  ///////////////
 
 router.get("/stationen", async (req: Request, res: Response) => {
     const liste = []
@@ -97,15 +114,4 @@ router.get("/stationen/:id/raeder", async (req: Request, res: Response) => {
     const liste = []
     for (const f of station.fahrraeder) liste.push(f.asObject());
     res.status(200).json(liste);
-});
-
-router.get("/benutzer/ausleihen", async (req: Request, res: Response) => {
-    const u = benutzerAuth(req);
-    if (u === null) {
-        respond401(res);
-    } else {
-        const liste = []
-        for (const a of u.ausleihen) liste.push(a.asObject());
-        res.status(200).json(liste);
-    }
 });
