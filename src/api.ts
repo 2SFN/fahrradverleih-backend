@@ -1,6 +1,7 @@
 import express, {NextFunction, Request, Response} from "express";
 import DataStore from "./util/data-store";
 import Benutzer from "./model/benutzer";
+import Ausleihe from "./model/ausleihe";
 
 // DataStore Instanz
 const data: DataStore = new DataStore();
@@ -37,11 +38,12 @@ const authRoute = (req: AuthorizedRequest, res: Response, next: NextFunction) =>
 }
 
 // Standard-Antworten bei Fehlern
-const respond400 = (r: Response) => {
-    r.status(400).json({error: "Falsche Parameter."})
+const respond400 = (r: Response, message: string = "Falsche Parameter.") => {
+    r.status(400).json({error: message});
 }
-const respond401 = (r: Response) => {
-    r.status(401).json({error: "Nicht autorisiert."})
+
+const respond401 = (r: Response, message: string = "Nicht autorisiert.") => {
+    r.status(401).json({error: message});
 }
 
 const router = express.Router()
@@ -59,7 +61,7 @@ router.post("/benutzer/login", async (req: Request, res: Response) => {
         String(req.body.email), String(req.body.secret));
 
     if (u === null) {
-        respond401(res);
+        respond401(res, "Falsche Zugangsdaten.");
     } else {
         // Für Testzwecke ausreichend: Token wird basierend auf
         // aktueller Microtime und Nutzer-ID erzeugt
@@ -85,10 +87,55 @@ router.post("/benutzer/details", authRoute, async (req: AuthorizedRequest, res: 
     res.status(200).json({"ok": true});
 });
 
+///////////////  API: /benutzer/ausleihen  ///////////////
+
 router.get("/benutzer/ausleihen", authRoute, async (req: AuthorizedRequest, res: Response) => {
-    const liste = []
+    let liste = []
     for (const a of req.benutzer?.ausleihen || []) liste.push(a.asObject());
+    liste = liste.sort((a, b) => b.bis.getTime() - a.bis.getTime());
     res.status(200).json(liste);
+});
+
+router.post("/benutzer/ausleihen/neu", authRoute, async (req: AuthorizedRequest, res: Response) => {
+    if (!req.body.fahrrad.id || !req.body.von || !req.body.bis || !req.benutzer) {
+        respond400(res);
+        return;
+    }
+
+    const rad = data.getRadNachId(req.body.fahrrad.id);
+    const valVon = Date.parse(req.body.von);
+    const valBis = Date.parse(req.body.bis);
+
+    if (rad === null || isNaN(valVon) || isNaN(valBis) || valBis < valVon || rad.station === null) {
+        respond400(res);
+    } else {
+        const ausleihe = new Ausleihe(`A-${req.benutzer.id}-${new Date().getTime()}`,
+            rad, req.benutzer, new Date(valVon), new Date(valBis), rad.typ.tarif);
+
+        rad.station.removeRad(rad);
+        req.benutzer.ausleihen.push(ausleihe);
+
+        res.status(200).json(ausleihe.asObject());
+    }
+});
+
+router.post("/benutzer/ausleihen/ende", authRoute, async (req: AuthorizedRequest, res: Response) => {
+    if (!req.body.ausleihe.id || !req.body.station.id || req.benutzer === undefined) {
+        respond400(res);
+        return;
+    }
+
+    const ausleihe = req.benutzer.getAusleiheNachId(req.body.ausleihe.id);
+    const station = data.getStationNachId(req.body.station.id);
+
+    if (ausleihe === null || station === null) {
+        respond400(res, "Ungültige Parameter (Station/Ausleihe).");
+    } else if (ausleihe.fahrrad.station !== null) {
+        respond400(res, "Fahrrad bereits zurückgegeben.");
+    } else {
+        station.addRad(ausleihe.fahrrad);
+        res.status(200).json(ausleihe.asObject());
+    }
 });
 
 ///////////////  API: /stationen  ///////////////
@@ -107,7 +154,7 @@ router.get("/stationen/:id/raeder", async (req: Request, res: Response) => {
 
     const station = data.getStationNachId(req.params.id);
     if (station === null) {
-        respond400(res);
+        respond400(res, "Ungültiger Parameter: Station.");
         return;
     }
 

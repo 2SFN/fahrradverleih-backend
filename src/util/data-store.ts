@@ -46,6 +46,10 @@ export default class DataStore {
             new Date("Sat Jul 16 2022 11:00:00 GMT+0200 (Central European Summer Time)"),
             new Date("Sat Jul 16 2022 14:00:00 GMT+0200 (Central European Summer Time)"),
             this.raeder[2].typ.tarif));
+        u.ausleihen.push(new Ausleihe("A-test3", this.raeder[1], u,
+            new Date("Sat Aug 06 2022 11:00:00 GMT+0200 (Central European Summer Time)"),
+            new Date("Sat Aug 31 2022 14:00:00 GMT+0200 (Central European Summer Time)"),
+            this.raeder[2].typ.tarif));
     }
 
     /**

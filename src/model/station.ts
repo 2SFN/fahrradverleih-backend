@@ -34,4 +34,18 @@ export default class Station {
         };
     }
 
+    public removeRad(rad: Fahrrad) {
+        this.fahrraeder.forEach((r, i) => {
+            if (r.id === rad.id) {
+                this.fahrraeder.splice(i, 1);
+                r.station = null;
+            }
+        });
+    }
+
+    public addRad(rad: Fahrrad) {
+        this.fahrraeder.push(rad);
+        rad.station = this;
+    }
+
 }

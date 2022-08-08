@@ -22,4 +22,8 @@ export default class Benutzer {
             email: this.email
         };
     }
+
+    public getAusleiheNachId(id: string): Ausleihe | null {
+        return this.ausleihen.find(a => a.id === id) || null;
+    }
 }
