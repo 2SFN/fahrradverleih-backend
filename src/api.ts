@@ -133,6 +133,7 @@ router.post("/benutzer/ausleihen/ende", authRoute, async (req: AuthorizedRequest
     } else if (ausleihe.fahrrad.station !== null) {
         respond400(res, "Fahrrad bereits zurückgegeben.");
     } else {
+        if(ausleihe.bis.getTime() > new Date().getTime()) ausleihe.bis = new Date();
         station.addRad(ausleihe.fahrrad);
         res.status(200).json(ausleihe.asObject());
     }

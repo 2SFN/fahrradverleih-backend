@@ -33,8 +33,11 @@ export default class DataStore {
 
         this.raeder.push(new Fahrrad("R0001", new GeopositionT(), RadTypen.CITY_BIKE, this.stationen[0]));
         this.raeder.push(new Fahrrad("R0002", new GeopositionT(), RadTypen.E_BIKE, this.stationen[0]));
-        this.raeder.push(new Fahrrad("R0003", new GeopositionT(), RadTypen.JUGENDRAD, this.stationen[0]));
         this.raeder.forEach(r => this.stationen[0].fahrraeder.push(r));
+
+        this.raeder.push(new Fahrrad("R0003", new GeopositionT(), RadTypen.JUGENDRAD, null));
+        this.raeder.push(new Fahrrad("R0004", new GeopositionT(), RadTypen.E_BIKE, this.stationen[1]));
+        this.stationen[1].addRad(this.raeder[3]);
 
         // Einen Anwender mit Daten vorbereiten
         const u = this.benutzer[2];
@@ -42,11 +45,11 @@ export default class DataStore {
             new Date("Sat Jul 16 2022 07:00:00 GMT+0200 (Central European Summer Time)"),
             new Date("Sat Jul 16 2022 10:00:00 GMT+0200 (Central European Summer Time)"),
             this.raeder[0].typ.tarif));
-        u.ausleihen.push(new Ausleihe("A-test2", this.raeder[2], u,
+        u.ausleihen.push(new Ausleihe("A-test2", this.raeder[1], u,
             new Date("Sat Jul 16 2022 11:00:00 GMT+0200 (Central European Summer Time)"),
             new Date("Sat Jul 16 2022 14:00:00 GMT+0200 (Central European Summer Time)"),
             this.raeder[2].typ.tarif));
-        u.ausleihen.push(new Ausleihe("A-test3", this.raeder[1], u,
+        u.ausleihen.push(new Ausleihe("A-test3", this.raeder[2], u,
             new Date("Sat Aug 06 2022 11:00:00 GMT+0200 (Central European Summer Time)"),
             new Date("Sat Aug 31 2022 14:00:00 GMT+0200 (Central European Summer Time)"),
             this.raeder[2].typ.tarif));
