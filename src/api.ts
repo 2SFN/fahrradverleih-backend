@@ -1,4 +1,7 @@
+// noinspection ExceptionCaughtLocallyJS
+
 import express, {NextFunction, Request, Response} from "express";
+import {JwtPayload, Secret, sign, verify} from "jsonwebtoken";
 import DataStore from "./util/data-store";
 import Benutzer from "./model/benutzer";
 import Ausleihe from "./model/ausleihe";
@@ -6,45 +9,33 @@ import Ausleihe from "./model/ausleihe";
 // DataStore Instanz
 const data: DataStore = new DataStore();
 
-// Stark vereinfachte Benutzerverwaltung und Authentifizierung:
-// Map, die einem generierten Token eine Benutzer-Instanz zuweist.
-// Außerdem wird ein Token hardcoded vorgesehen, um im REST-Client
-// auch über Serverinstanzen hinweg reproduzierbare Ergebnisse
-// erzeugen zu können.
-const sessions: Map<string, Benutzer> = new Map();
-
-{
-    const u3: Benutzer | null = data.getBenutzerNachId("U0003");
-    if (u3 !== null) sessions.set("U0003-Test", u3);
-}
-
-const benutzerAuth = (r: Request): Benutzer | null => {
-    return sessions.get(String(r.headers.token)) || null;
-}
-
 // Minimale express-middleware, welche den Benutzer authentifiziert und
 // den Request-Context entsprechend aktualisiert
 interface AuthorizedRequest extends Request {
     benutzer?: Benutzer;
 }
 
-const authRoute = (req: AuthorizedRequest, res: Response, next: NextFunction) => {
-    const u = benutzerAuth(req);
-    if (u === null) respond401(res);
-    else {
+interface AuthPayload extends JwtPayload {
+    benutzer_id?: string;
+}
+
+// Für Sessions wird JWT verwendet; die Authentifizierung ist damit stateless und
+// Tokens funktionieren auch nach einem Reload des Backends weiter.
+const authRoute = async (req: AuthorizedRequest, res: Response, next: NextFunction) => {
+    try {
+        const jwt = verify(String(req.headers.token), String(process.env.JWT_SECRET)) as AuthPayload;
+        const u = data.getBenutzerNachId(jwt.benutzer_id || "");
+        if (u === null) throw new Error("Nicht autorisiert.");
         req.benutzer = u;
         next();
+    } catch (e) {
+        respond401(res);
     }
 }
 
 // Standard-Antworten bei Fehlern
-const respond400 = (r: Response, message: string = "Falsche Parameter.") => {
-    r.status(400).json({error: message});
-}
-
-const respond401 = (r: Response, message: string = "Nicht autorisiert.") => {
-    r.status(401).json({error: message});
-}
+const respond400 = (r: Response, msg = "Falsche Parameter.") => r.status(400).json({error: msg});
+const respond401 = (r: Response, msg = "Nicht autorisiert.") => r.status(401).json({error: msg});
 
 const router = express.Router()
 export default router;
@@ -57,16 +48,12 @@ router.post("/benutzer/login", async (req: Request, res: Response) => {
         return;
     }
 
-    const u = data.authentifiziereBenutzer(
-        String(req.body.email), String(req.body.secret));
-
+    const u = data.authentifiziereBenutzer(String(req.body.email), String(req.body.secret));
     if (u === null) {
         respond401(res, "Falsche Zugangsdaten.");
     } else {
-        // Für Testzwecke ausreichend: Token wird basierend auf
-        // aktueller Microtime und Nutzer-ID erzeugt
-        const token = `T-${u.id}-${new Date().getTime()}`;
-        sessions.set(token, u);
+        const token = sign({benutzer_id: u.id} as AuthPayload, process.env.JWT_SECRET as Secret,
+            {expiresIn: "30d"});
         res.status(200).json({ok: true, token: token});
     }
 });
@@ -133,7 +120,7 @@ router.post("/benutzer/ausleihen/ende", authRoute, async (req: AuthorizedRequest
     } else if (ausleihe.fahrrad.station !== null) {
         respond400(res, "Fahrrad bereits zurückgegeben.");
     } else {
-        if(ausleihe.bis.getTime() > new Date().getTime()) ausleihe.bis = new Date();
+        if (ausleihe.bis.getTime() > new Date().getTime()) ausleihe.bis = new Date();
         station.addRad(ausleihe.fahrrad);
         res.status(200).json(ausleihe.asObject());
     }
