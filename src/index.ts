@@ -19,13 +19,8 @@ app.use(express.json());
 
 // Konfiguration für CORS innerhalb der Ionic-Entwicklungsumgebung
 // s. https://ionicframework.com/docs/troubleshooting/cors
-const allowedOrigins = [
-    'capacitor://localhost',
-    'ionic://localhost',
-    'http://localhost',
-    'http://localhost:8080',
-    'http://localhost:8100',
-];
+const allowedOrigins: string[] = [];
+(process.env.CORS_ALLOWED_ORIGINS || "").split(';').forEach(o => allowedOrigins.push(o));
 
 const corsOptions: CorsOptions = {
     origin: allowedOrigins
