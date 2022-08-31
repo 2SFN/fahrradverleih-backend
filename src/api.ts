@@ -71,7 +71,7 @@ router.post("/benutzer/details", authRoute, async (req: AuthorizedRequest, res: 
     if (req.body.vorname) req.benutzer.vorname = req.body.vorname;
     if (req.body.name) req.benutzer.name = req.body.name;
     if (req.body.email) req.benutzer.email = req.body.email;
-    res.status(200).json({"ok": true});
+    res.status(200).json(req.benutzer.asObject());
 });
 
 ///////////////  API: /benutzer/ausleihen  ///////////////
